@@ -231,6 +231,8 @@ export default function Home({
                                                     },
                                                     body: JSON.stringify({
                                                         id: item.Id,
+                                                        instance: router.query
+                                                            .identifier as string,
                                                     }),
                                                 }).then(() => {
                                                     // Refresh the page after the request is done
