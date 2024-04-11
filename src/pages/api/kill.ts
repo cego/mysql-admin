@@ -1,5 +1,3 @@
-// Given the id in post body, kill the mysql process with that id
-
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getConfig } from '@/lib/config'
 import mysql from 'mysql2/promise'
@@ -25,10 +23,18 @@ export default async function handler(
         }
 
         // Kill the mysql process with the id
-        // Use the id to kill the mysql process
-        // res.status(200).json({ name: 'John Doe' });
-        const conn = await mysql.createConnection(dbConfig)
-        await conn.query(`KILL ?`, [id])
+        let conn: mysql.Connection | null = null
+        try {
+            conn = await mysql.createConnection(dbConfig)
+            await conn.query(`KILL ?`, [id])
+            if(process.env.USER_HEADER) {
+                const user = req.headers[process.env.USER_HEADER];
+                console.log(`User ${user} killed process ${id} on instance ${instance}`)
+            }
+        }
+        finally {
+            conn?.end()
+        }
         res.status(200).json({ id })
     } else {
         res.setHeader('Allow', ['POST'])

@@ -115,18 +115,26 @@ export const getServerSideProps = (async (context) => {
         }
     }
 
-    // Fetch data from external API
-    const conn = await mysql.createConnection(instance)
+    let conn: mysql.Connection | null = null
 
-    const [processListResult] = await conn.query('SHOW PROCESSLIST;')
-    const processList: Process[] = processListResult as Process[]
-    const [innoDbStatusResult] = await conn.query<RowDataPacket[]>(
-        'SHOW ENGINE INNODB STATUS;'
-    )
+    let processList: Process[] = []
+    let innoDbStatusString = '';
 
-    const innoDbStatusString = innoDbStatusResult[0]['Status'] as string
-    // Convert the status string
-    const innoDbStatus = parseInnoDbStatus(innoDbStatusString as string)
+    try {
+        conn = await mysql.createConnection(instance)
+        const [processListResult] = await conn.query('SHOW PROCESSLIST;')
+        processList = processListResult as Process[]
+        const [innoDbStatusResult] = await conn.query<RowDataPacket[]>(
+            'SHOW ENGINE INNODB STATUS;'
+        )
+
+        const innoDbStatusString = innoDbStatusResult[0]['Status'] as string
+    }
+    finally {
+        conn?.end()
+    }
+
+    const innoDbStatus = parseInnoDbStatus(innoDbStatusString);
 
     const processListWithTransaction: ProcessWithTransaction[] =
         processList.map((process) => {
@@ -139,10 +147,10 @@ export const getServerSideProps = (async (context) => {
 
     // Order by transaction.activeTime desc, then by process.Time desc
     processListWithTransaction.sort((a, b) => {
-        if (a.transaction && !b.transaction) {
+        if (a.transaction && !b.transaction && a.transaction.activeTime > 10) {
             return -1
         }
-        if (!a.transaction && b.transaction) {
+        if (!a.transaction && b.transaction && b.transaction.activeTime > 10) {
             return 1
         }
         if (a.transaction && b.transaction) {
