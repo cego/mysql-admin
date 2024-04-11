@@ -75,6 +75,11 @@ const parseInnoDbStatus = (innoDbStatus: string): TransactionInfoDict => {
 
     for (let i = transactionsStartIndex; i < splitInnoDbStatus.length; i++) {
         const line = splitInnoDbStatus[i]
+
+        if (line === undefined) {
+            continue
+        }
+
         if (line.startsWith('--------')) {
             break
         }
@@ -118,7 +123,7 @@ export const getServerSideProps = (async (context) => {
     let conn: mysql.Connection | null = null
 
     let processList: Process[] = []
-    let innoDbStatusString = '';
+    let innoDbStatusString = ''
 
     try {
         conn = await mysql.createConnection(instance)
@@ -128,13 +133,12 @@ export const getServerSideProps = (async (context) => {
             'SHOW ENGINE INNODB STATUS;'
         )
 
-        const innoDbStatusString = innoDbStatusResult[0]['Status'] as string
-    }
-    finally {
+        innoDbStatusString = innoDbStatusResult[0]['Status'] as string
+    } finally {
         conn?.end()
     }
 
-    const innoDbStatus = parseInnoDbStatus(innoDbStatusString);
+    const innoDbStatus = parseInnoDbStatus(innoDbStatusString)
 
     const processListWithTransaction: ProcessWithTransaction[] =
         processList.map((process) => {

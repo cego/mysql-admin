@@ -27,12 +27,13 @@ export default async function handler(
         try {
             conn = await mysql.createConnection(dbConfig)
             await conn.query(`KILL ?`, [id])
-            if(process.env.USER_HEADER) {
-                const user = req.headers[process.env.USER_HEADER];
-                console.log(`User ${user} killed process ${id} on instance ${instance}`)
+            if (process.env.USER_HEADER) {
+                const user = req.headers[process.env.USER_HEADER]
+                console.log(
+                    `User ${user} killed process ${id} on instance ${instance}`
+                )
             }
-        }
-        finally {
+        } finally {
             conn?.end()
         }
         res.status(200).json({ id })
