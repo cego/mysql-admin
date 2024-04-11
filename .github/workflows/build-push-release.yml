@@ -1,8 +1,6 @@
 on:
   release:
     types: [created]
-  push: 
-    branches: [main]
     
 #
 name: Create and publish a Docker image

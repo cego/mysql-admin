@@ -7,7 +7,7 @@ This is a small Next.js app for viewing and killing active processes on multiple
 - Kill a process with two clicks.
 
 ### Deployment
-TODO: Link to dockerhub
+Docker images: https://github.com/cego/mysql-admin/pkgs/container/mysql-admin
 
 The image requires the following environment variables:
 - `DB_INSTANCES` - A comma separated list of MariaDB instances to connect to.
