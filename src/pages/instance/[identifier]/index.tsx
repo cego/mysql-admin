@@ -4,6 +4,8 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import mysql from 'mysql2/promise'
 import { getConfig } from '@/lib/config'
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyValue, SortDescriptor } from '@nextui-org/react'
+import React from 'react'
 
 type TransactionInfoDict = {
     [threadId: number]: TransactionInfo
@@ -61,9 +63,7 @@ const blackOrWhite = function (hex: string): string {
 
 const parseInnoDbStatus = (innoDbStatus: string): TransactionInfoDict => {
     const splitInnoDbStatus = innoDbStatus.split('\n') // Find the line LIST OF TRANSACTIONS FOR EACH SESSION:\n
-    const transactionsStartIndex = splitInnoDbStatus.findIndex((line) =>
-        line.includes('LIST OF TRANSACTIONS FOR EACH SESSION:')
-    )
+    const transactionsStartIndex = splitInnoDbStatus.findIndex((line) => line.includes('LIST OF TRANSACTIONS FOR EACH SESSION:'))
 
     // After the transactionStartIndex, read transactions lines, splitting by lines starting with ---TRANSACTION, until we meet the line --------\n
     const transactions: TransactionInfoDict = {}
@@ -129,9 +129,7 @@ export const getServerSideProps = (async (context) => {
         conn = await mysql.createConnection(instance)
         const [processListResult] = await conn.query('SHOW PROCESSLIST;')
         processList = processListResult as Process[]
-        const [innoDbStatusResult] = await conn.query<RowDataPacket[]>(
-            'SHOW ENGINE INNODB STATUS;'
-        )
+        const [innoDbStatusResult] = await conn.query<RowDataPacket[]>('SHOW ENGINE INNODB STATUS;')
 
         innoDbStatusString = innoDbStatusResult[0]['Status'] as string
     } finally {
@@ -140,14 +138,13 @@ export const getServerSideProps = (async (context) => {
 
     const innoDbStatus = parseInnoDbStatus(innoDbStatusString)
 
-    const processListWithTransaction: ProcessWithTransaction[] =
-        processList.map((process) => {
-            const transaction = innoDbStatus[process.Id] || null
-            return {
-                ...process,
-                transaction,
-            }
-        })
+    const processListWithTransaction: ProcessWithTransaction[] = processList.map((process) => {
+        const transaction = innoDbStatus[process.Id] || null
+        return {
+            ...process,
+            transaction,
+        }
+    })
 
     // Order by transaction.activeTime desc, then by process.Time desc
     processListWithTransaction.sort((a, b) => {
@@ -171,10 +168,29 @@ export const getServerSideProps = (async (context) => {
     return { props: { repo } }
 }) satisfies GetServerSideProps<{ repo: Repo }>
 
-export default function Home({
-    repo,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function Home({ repo }: InferGetServerSidePropsType<typeof getServerSideProps>) {
     const router = useRouter()
+
+    const [processList, setProcessList] = React.useState<ProcessWithTransaction[]>(repo.processList)
+
+    const sort: (descriptor: SortDescriptor) => void = (descriptor) => {
+        const key = descriptor.column as string
+        const direction = descriptor.direction
+
+        repo.processList.sort((a, b) => {
+            const aValue = getKeyValue(a, key)
+            const bValue = getKeyValue(b, key)
+
+            if (direction === 'ascending') {
+                return aValue > bValue ? 1 : -1
+            } else {
+                return aValue < bValue ? 1 : -1
+            }
+        })
+
+        setProcessList([...repo.processList])
+    }
+
     return (
         <main>
             <div className="text-xl breadcrumbs">
@@ -187,152 +203,115 @@ export default function Home({
                     </li>
                 </ul>
             </div>
-            <div className="overflow-x-auto">
-                <table className="table table-xs">
-                    <thead>
-                        <tr>
-                            <th>🔥</th>
-                            <th>Id</th>
-                            <th>User</th>
-                            <th>Host</th>
-                            <th>db</th>
-                            <th>Command</th>
-                            <th>Time</th>
-                            <th>State</th>
-                            <th>Info</th>
-                            <th>Progress</th>
-                            <th>Transaction Time</th>
-                            <th>Transaction Info</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {repo.processList.map(
-                            (item: ProcessWithTransaction) => (
-                                <tr
-                                    key={item.Id}
-                                    className={`${item.transaction?.activeTime && item.transaction.activeTime > 10 ? 'bg-red-300' : ''}`}
+            <Table
+                aria-label="Example table with client side sorting"
+                sortDescriptor={{ column: 'id', direction: 'ascending' }}
+                onSortChange={sort}
+                isCompact={true}
+                isStriped={true}
+            >
+                <TableHeader>
+                    <TableColumn key="kill">🔥</TableColumn>
+                    <TableColumn allowsSorting={true} key="id">
+                        Id
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="user">
+                        User
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="host">
+                        Host
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="db">
+                        db
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="command">
+                        Command
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="time">
+                        Time
+                    </TableColumn>
+                    <TableColumn key="state">State</TableColumn>
+                    <TableColumn allowsSorting={true} key="info">
+                        Info
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="progress">
+                        Progress
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="transactionTime">
+                        Transaction Time
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="transactionInfo">
+                        Transaction Info
+                    </TableColumn>
+                </TableHeader>
+                <TableBody items={processList}>
+                    {(item) => (
+                        <TableRow key={item.Id} className={`${item.transaction?.activeTime && item.transaction.activeTime > 10 ? 'bg-red-300' : ''}`}>
+                            <TableCell className="align-top">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm(`Are you sure you want to kill process ${item.Id} by user '${item.User}'?`)) {
+                                            return
+                                        }
+                                        await fetch('/api/kill', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                id: item.Id,
+                                                instance: router.query.identifier as string,
+                                            }),
+                                        }).then(() => {
+                                            // Refresh the page after the request is done
+                                            window.location.reload()
+                                        })
+                                    }}
                                 >
-                                    <td className={'align-top'}>
-                                        {/* Make kill button with skull emoji, on click send a request to /api/kill with the id in the body */}
-                                        <button
-                                            onClick={async () => {
-                                                if (
-                                                    !confirm(
-                                                        `Are you sure you want to kill process ${item.Id} by user '${item.User}'?`
-                                                    )
-                                                ) {
-                                                    return
-                                                }
-                                                await fetch('/api/kill', {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type':
-                                                            'application/json',
-                                                    },
-                                                    body: JSON.stringify({
-                                                        id: item.Id,
-                                                        instance: router.query
-                                                            .identifier as string,
-                                                    }),
-                                                }).then(() => {
-                                                    // Refresh the page after the request is done
-                                                    window.location.reload()
-                                                })
-                                            }}
-                                        >
-                                            💀
-                                        </button>
-                                    </td>
-                                    <td className={'align-top'}>{item.Id}</td>
-                                    <td className={'align-top'}>
-                                        <div
-                                            style={{
-                                                color: blackOrWhite(
-                                                    stringToColor(item.User)
-                                                ),
-                                                backgroundColor: stringToColor(
-                                                    item.User
-                                                ),
-                                                borderColor: stringToColor(
-                                                    item.User
-                                                ),
-                                            }}
-                                            className={'badge'}
-                                        >
-                                            {item.User}
-                                        </div>
-                                    </td>
-                                    <td className={'align-top'}>{item.Host}</td>
-                                    <td className={'align-top'}>
-                                        <div
-                                            style={{
-                                                color: blackOrWhite(
-                                                    stringToColor(item.db)
-                                                ),
-                                                backgroundColor: stringToColor(
-                                                    item.db
-                                                ),
-                                                borderColor: stringToColor(
-                                                    item.db
-                                                ),
-                                            }}
-                                            className={'badge'}
-                                        >
-                                            {item.db}
-                                        </div>
-                                    </td>
-                                    <td className={'align-top'}>
-                                        {item.Command}
-                                    </td>
-                                    <td className={'align-top'}>
-                                        {item.Time} s
-                                    </td>
-                                    <td className={'align-top'}>
-                                        {item.State}
-                                    </td>
-                                    <td className="font-mono">{item.Info}</td>
-                                    <td className={'align-top'}>
-                                        {item.Progress}
-                                    </td>
-                                    <td className={'align-top'}>
-                                        {item.transaction?.activeTime}
-                                        {item.transaction?.activeTime
-                                            ? ' s'
-                                            : ''}
-                                    </td>
-                                    <td className="align-top font-mono whitespace-pre-line">
-                                        {item.transaction?.info.join('\n')}
-                                    </td>
-                                </tr>
-                            )
-                        )}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>🔥</th>
-                            <th>Id</th>
-                            <th>User</th>
-                            <th>Host</th>
-                            <th>db</th>
-                            <th>Command</th>
-                            <th>Time</th>
-                            <th>State</th>
-                            <th>Info</th>
-                            <th>Progress</th>
-                            <th>Transaction Time</th>
-                            <th>Transaction Info</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                                    💀
+                                </button>
+                            </TableCell>
+                            <TableCell className="align-top">{item.Id}</TableCell>
+                            <TableCell className="align-top">
+                                <div
+                                    style={{
+                                        color: blackOrWhite(stringToColor(item.User)),
+                                        backgroundColor: stringToColor(item.User),
+                                        borderColor: stringToColor(item.User),
+                                    }}
+                                    className={'badge'}
+                                >
+                                    {item.User}
+                                </div>
+                            </TableCell>
+                            <TableCell className="align-top">{item.Host}</TableCell>
+                            <TableCell className="align-top">
+                                <div
+                                    style={{
+                                        color: blackOrWhite(stringToColor(item.db)),
+                                        backgroundColor: stringToColor(item.db),
+                                        borderColor: stringToColor(item.db),
+                                    }}
+                                    className={'badge'}
+                                >
+                                    {item.db}
+                                </div>
+                            </TableCell>
+                            <TableCell className="align-top">{item.Command}</TableCell>
+                            <TableCell className="align-top">{item.Time} s</TableCell>
+                            <TableCell className="align-top">{item.State}</TableCell>
+                            <TableCell className="align-top font-mono">{item.Info}</TableCell>
+                            <TableCell className="align-top">{item.Progress}</TableCell>
+                            <TableCell className="align-top">{item.transaction?.activeTime} s</TableCell>
+                            <TableCell className="align-top font-mono whitespace-pre-line">{item.transaction?.info.join('\n')}</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
             <div className="w-9/12 m-5 collapse collapse-plus bg-base-200">
                 <input type="checkbox" />
-                <div className="collapse-title text-xl font-medium">
-                    Click to see complete innodb status result.
-                </div>
-                <div className="collapse-content whitespace-pre-line font-mono">
-                    {repo.innodbStatus}
-                </div>
+                <div className="collapse-title text-xl font-medium">Click to see complete innodb status result.</div>
+                <div className="collapse-content whitespace-pre-line font-mono">{repo.innodbStatus}</div>
             </div>
         </main>
     )

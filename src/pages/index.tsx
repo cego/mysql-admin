@@ -13,9 +13,7 @@ export const getServerSideProps = (async () => {
     return { props: { repo } }
 }) satisfies GetServerSideProps<{ repo: Repo }>
 
-export default function Home({
-    repo,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function Home({ repo }: InferGetServerSidePropsType<typeof getServerSideProps>) {
     return (
         <main>
             <div className="text-xl breadcrumbs">

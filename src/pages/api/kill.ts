@@ -2,10 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { getConfig } from '@/lib/config'
 import mysql from 'mysql2/promise'
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         const { id, instance } = req.body
         if (!id) {
@@ -29,9 +26,7 @@ export default async function handler(
             await conn.query(`KILL ?`, [id])
             if (process.env.USER_HEADER) {
                 const user = req.headers[process.env.USER_HEADER]
-                console.log(
-                    `User ${user} killed process ${id} on instance ${instance}`
-                )
+                console.log(`User ${user} killed process ${id} on instance ${instance}`)
             }
         } finally {
             conn?.end()
