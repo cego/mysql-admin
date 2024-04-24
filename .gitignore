@@ -37,3 +37,6 @@ next-env.d.ts
 
 # IDE
 .idea
+
+# dumps from api should never be committed by accident
+src/lib/processlist.json

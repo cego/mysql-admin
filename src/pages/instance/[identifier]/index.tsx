@@ -1,14 +1,15 @@
-import { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getConfig } from '@/lib/config'
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyValue, SortDescriptor } from '@nextui-org/react'
-import React from 'react'
-import { getTransactionsAndInnoDBStatus, ProcessWithTransaction } from '@/lib/transaction_repository'
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyValue, Spinner } from '@nextui-org/react'
+import React, { useEffect } from 'react'
+import { ProcessWithTransaction } from '@/lib/transaction_repository'
+import { useAsyncList } from '@react-stately/data'
 
-type Repo = {
-    processList: ProcessWithTransaction[]
-    innodbStatus: string
+const formatNumber = function (num: number | null | undefined): string {
+    if (num === null || num === undefined) {
+        return ''
+    }
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
 
 const stringToColor = function (str: string | null): string {
@@ -35,53 +36,73 @@ const blackOrWhite = function (hex: string): string {
     return brightness > 155 ? '#000000' : '#ffffff'
 }
 
-export const getServerSideProps = (async (context) => {
-    const instance = getConfig().instances[context.query.identifier as string]
-
-    if (!instance) {
-        return {
-            redirect: {
-                destination: '/',
-                permanent: false,
-            },
-        }
-    }
-
-    const [processListWithTransaction, innoDbStatusString] = await getTransactionsAndInnoDBStatus(instance)
-
-    const repo: Repo = {
-        processList: processListWithTransaction,
-        innodbStatus: innoDbStatusString,
-    }
-    // Pass data to the page via props
-    return { props: { repo } }
-}) satisfies GetServerSideProps<{ repo: Repo }>
-
-export default function Home({ repo }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function ShowInstance() {
     const router = useRouter()
 
-    const [processList, setProcessList] = React.useState<ProcessWithTransaction[]>(repo.processList)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [innodbStatus, setInnodbStatus] = React.useState<string>('')
 
-    const sort: (descriptor: SortDescriptor) => void = (descriptor) => {
-        const key = descriptor.column as string
-        const direction = descriptor.direction
-
-        repo.processList.sort((a, b) => {
-            const aValue = getKeyValue(a, key)
-            const bValue = getKeyValue(b, key)
-
-            if (direction === 'ascending') {
-                return aValue > bValue ? 1 : -1
-            } else {
-                return aValue < bValue ? 1 : -1
+    let list = useAsyncList<ProcessWithTransaction>({
+        async load({ signal }) {
+            const instance = router.query.identifier as string
+            if (!instance) {
+                return {
+                    items: [],
+                }
             }
-        })
+            let res = await fetch(`/api/processlist?instance=${instance}`, {
+                signal,
+            })
+            let json = await res.json()
+            setIsLoading(false)
+            setInnodbStatus(json.innoDbStatus)
 
-        setProcessList([...repo.processList])
-    }
+            return {
+                items: json.processList,
+            }
+        },
+        async sort({ items, sortDescriptor }) {
+            const key = sortDescriptor.column as string
+            return {
+                items: items.sort((a, b) => {
+                    let first = getKeyValue(a, key)
+                    let second = getKeyValue(b, key)
+                    if (key === 'transactionTime') {
+                        first = a.transaction?.activeTime
+                        second = b.transaction?.activeTime
+                    }
+
+                    if (key === 'transactionInfo') {
+                        first = a.transaction?.info.join('\n')
+                        second = b.transaction?.info.join('\n')
+                    }
+
+                    let cmp
+
+                    if (first == null && second != null) {
+                        cmp = -1
+                    } else if (first != null && second == null) {
+                        cmp = 1
+                    } else {
+                        cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1
+                    }
+
+                    if (sortDescriptor.direction === 'descending') {
+                        cmp *= -1
+                    }
+
+                    return cmp
+                }),
+            }
+        },
+    })
+
+    useEffect(() => {
+        list.reload()
+    }, [router.query.identifier])
 
     return (
-        <main>
+        <main className={'overflow-x-scroll'}>
             <div className="text-xl breadcrumbs">
                 <ul>
                     <li>
@@ -92,38 +113,34 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
                     </li>
                 </ul>
             </div>
-            <Table
-                aria-label="Example table with client side sorting"
-                sortDescriptor={{ column: 'id', direction: 'ascending' }}
-                onSortChange={sort}
-                isCompact={true}
-                isStriped={true}
-            >
+            <Table aria-label="Example table with client side sorting" sortDescriptor={list.sortDescriptor} onSortChange={list.sort} isCompact={true}>
                 <TableHeader>
                     <TableColumn key="kill">🔥</TableColumn>
-                    <TableColumn allowsSorting={true} key="id">
+                    <TableColumn allowsSorting={true} key="Id">
                         Id
                     </TableColumn>
-                    <TableColumn allowsSorting={true} key="user">
+                    <TableColumn allowsSorting={true} key="User">
                         User
                     </TableColumn>
-                    <TableColumn allowsSorting={true} key="host">
+                    <TableColumn allowsSorting={true} key="Host">
                         Host
                     </TableColumn>
                     <TableColumn allowsSorting={true} key="db">
                         db
                     </TableColumn>
-                    <TableColumn allowsSorting={true} key="command">
+                    <TableColumn allowsSorting={true} key="Command">
                         Command
                     </TableColumn>
-                    <TableColumn allowsSorting={true} key="time">
+                    <TableColumn allowsSorting={true} key="Time">
                         Time
                     </TableColumn>
-                    <TableColumn key="state">State</TableColumn>
-                    <TableColumn allowsSorting={true} key="info">
+                    <TableColumn allowsSorting={true} key="State">
+                        State
+                    </TableColumn>
+                    <TableColumn allowsSorting={true} key="Info">
                         Info
                     </TableColumn>
-                    <TableColumn allowsSorting={true} key="progress">
+                    <TableColumn allowsSorting={true} key="Progress">
                         Progress
                     </TableColumn>
                     <TableColumn allowsSorting={true} key="transactionTime">
@@ -133,10 +150,10 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
                         Transaction Info
                     </TableColumn>
                 </TableHeader>
-                <TableBody items={processList}>
+                <TableBody items={list.items} isLoading={isLoading} loadingContent={<Spinner label="Loading..." />}>
                     {(item) => (
                         <TableRow key={item.Id} className={`${item.transaction?.activeTime && item.transaction.activeTime > 10 ? 'bg-red-300' : ''}`}>
-                            <TableCell className="align-top">
+                            <TableCell className="align-top text-nowrap">
                                 <button
                                     onClick={async () => {
                                         if (!confirm(`Are you sure you want to kill process ${item.Id} by user '${item.User}'?`)) {
@@ -160,8 +177,8 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
                                     💀
                                 </button>
                             </TableCell>
-                            <TableCell className="align-top">{item.Id}</TableCell>
-                            <TableCell className="align-top">
+                            <TableCell className="align-top text-nowrap">{item.Id}</TableCell>
+                            <TableCell className="align-top text-nowrap">
                                 <div
                                     style={{
                                         color: blackOrWhite(stringToColor(item.User)),
@@ -173,8 +190,8 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
                                     {item.User}
                                 </div>
                             </TableCell>
-                            <TableCell className="align-top">{item.Host}</TableCell>
-                            <TableCell className="align-top">
+                            <TableCell className="align-top text-nowrap">{item.Host}</TableCell>
+                            <TableCell className="align-top text-nowrap">
                                 <div
                                     style={{
                                         color: blackOrWhite(stringToColor(item.db)),
@@ -186,13 +203,15 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
                                     {item.db}
                                 </div>
                             </TableCell>
-                            <TableCell className="align-top">{item.Command}</TableCell>
-                            <TableCell className="align-top">{item.Time} s</TableCell>
-                            <TableCell className="align-top">{item.State}</TableCell>
-                            <TableCell className="align-top font-mono">{item.Info}</TableCell>
-                            <TableCell className="align-top">{item.Progress}</TableCell>
-                            <TableCell className="align-top">{item.transaction?.activeTime} s</TableCell>
-                            <TableCell className="align-top font-mono whitespace-pre-line">{item.transaction?.info.join('\n')}</TableCell>
+                            <TableCell className="align-top text-nowrap">{item.Command}</TableCell>
+                            <TableCell className="align-top text-nowrap">{formatNumber(item.Time)} s</TableCell>
+                            <TableCell className="align-top text-nowrap">{item.State}</TableCell>
+                            <TableCell className="align-top font-mono text-nowrap">{item.Info}</TableCell>
+                            <TableCell className="align-top text-nowrap">{item.Progress}</TableCell>
+                            <TableCell className="align-top text-nowrap">
+                                {formatNumber(item.transaction?.activeTime)} {item.transaction?.activeTime ? 's' : ''}
+                            </TableCell>
+                            <TableCell className="align-top font-mono whitespace-pre-line text-nowrap">{item.transaction?.info.join('\n')}</TableCell>
                         </TableRow>
                     )}
                 </TableBody>
@@ -200,7 +219,7 @@ export default function Home({ repo }: InferGetServerSidePropsType<typeof getSer
             <div className="w-9/12 m-5 collapse collapse-plus bg-base-200">
                 <input type="checkbox" />
                 <div className="collapse-title text-xl font-medium">Click to see complete innodb status result.</div>
-                <div className="collapse-content whitespace-pre-line font-mono">{repo.innodbStatus}</div>
+                <div className="collapse-content whitespace-pre-line font-mono">{innodbStatus}</div>
             </div>
         </main>
     )

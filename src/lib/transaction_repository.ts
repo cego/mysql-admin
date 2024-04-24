@@ -1,6 +1,7 @@
 import { Instance } from '@/lib/config'
 import mysql from 'mysql2/promise'
 import { RowDataPacket } from 'mysql2/promise'
+import * as processListJson from '@/lib/processlist.json'
 
 export type TransactionInfoDict = {
     [threadId: number]: TransactionInfo
@@ -75,6 +76,7 @@ const parseInnoDbStatus = (innoDbStatus: string): TransactionInfoDict => {
 }
 
 export const getTransactionsAndInnoDBStatus = async (instance: Instance): Promise<[ProcessWithTransaction[], string]> => {
+    return [processListJson.processList, processListJson.innoDbStatus]
     let conn: mysql.Connection | null = null
 
     let processList: Process[] = []
