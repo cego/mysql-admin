@@ -1,0 +1,53 @@
+{{define "process_table"}}
+<table class="table table-compact table-zebra w-full">
+    <thead>
+        <tr>
+            <th>🔥</th>
+            {{$name := .Name}}
+            {{$sc := .SortColumn}}
+            {{$sd := .SortDir}}
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Id&amp;dir={{nextDir $sc $sd "Id"}}" hx-target="#process-table" hx-swap="innerHTML">Id{{sortIndicator $sc $sd "Id"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=User&amp;dir={{nextDir $sc $sd "User"}}" hx-target="#process-table" hx-swap="innerHTML">User{{sortIndicator $sc $sd "User"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Host&amp;dir={{nextDir $sc $sd "Host"}}" hx-target="#process-table" hx-swap="innerHTML">Host{{sortIndicator $sc $sd "Host"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=db&amp;dir={{nextDir $sc $sd "db"}}" hx-target="#process-table" hx-swap="innerHTML">db{{sortIndicator $sc $sd "db"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Command&amp;dir={{nextDir $sc $sd "Command"}}" hx-target="#process-table" hx-swap="innerHTML">Command{{sortIndicator $sc $sd "Command"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Time&amp;dir={{nextDir $sc $sd "Time"}}" hx-target="#process-table" hx-swap="innerHTML">Time{{sortIndicator $sc $sd "Time"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=State&amp;dir={{nextDir $sc $sd "State"}}" hx-target="#process-table" hx-swap="innerHTML">State{{sortIndicator $sc $sd "State"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Info&amp;dir={{nextDir $sc $sd "Info"}}" hx-target="#process-table" hx-swap="innerHTML">Info{{sortIndicator $sc $sd "Info"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=Progress&amp;dir={{nextDir $sc $sd "Progress"}}" hx-target="#process-table" hx-swap="innerHTML">Progress{{sortIndicator $sc $sd "Progress"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=TransactionTime&amp;dir={{nextDir $sc $sd "TransactionTime"}}" hx-target="#process-table" hx-swap="innerHTML">Transaction Time{{sortIndicator $sc $sd "TransactionTime"}}</th>
+            <th class="cursor-pointer select-none" hx-get="/instance/{{$name}}?sort=TransactionInfo&amp;dir={{nextDir $sc $sd "TransactionInfo"}}" hx-target="#process-table" hx-swap="innerHTML">Transaction Info{{sortIndicator $sc $sd "TransactionInfo"}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Processes}}
+        <tr{{if and .Transaction (gt .Transaction.ActiveTime 10)}} class="bg-red-300"{{end}}>
+            <td class="align-top whitespace-nowrap">
+                <button
+                    hx-post="/instance/{{$name}}/kill?sort={{$sc}}&amp;dir={{$sd}}"
+                    hx-vals='{"id": "{{.ID}}"}'
+                    hx-confirm="Are you sure you want to kill process {{.ID}} by user '{{.User}}'?"
+                    hx-target="#process-table"
+                    hx-swap="innerHTML"
+                >💀</button>
+            </td>
+            <td class="align-top whitespace-nowrap">{{.ID}}</td>
+            <td class="align-top whitespace-nowrap">
+                <div class="badge" style="color: {{blackOrWhite (stringToColor .User)}}; background-color: {{stringToColor .User}}; border-color: {{stringToColor .User}};">{{.User}}</div>
+            </td>
+            <td class="align-top whitespace-nowrap">{{.Host}}</td>
+            <td class="align-top whitespace-nowrap">
+                <div class="badge" style="color: {{blackOrWhite (stringToColor .DB)}}; background-color: {{stringToColor .DB}}; border-color: {{stringToColor .DB}};">{{.DB}}</div>
+            </td>
+            <td class="align-top whitespace-nowrap">{{.Command}}</td>
+            <td class="align-top whitespace-nowrap">{{formatNumber .Time}} s</td>
+            <td class="align-top whitespace-nowrap">{{.State}}</td>
+            <td class="align-top whitespace-nowrap font-mono">{{.Info}}</td>
+            <td class="align-top whitespace-nowrap">{{.Progress}}</td>
+            <td class="align-top whitespace-nowrap">{{if .Transaction}}{{formatNumber .Transaction.ActiveTime}} s{{end}}</td>
+            <td class="align-top whitespace-pre-line font-mono">{{if .Transaction}}{{join .Transaction.Info "\n"}}{{end}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}

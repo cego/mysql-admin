@@ -1,0 +1,18 @@
+{{define "content"}}
+<div class="text-xl breadcrumbs">
+    <ul>
+        <li><a href="/">Instance Selector</a></li>
+        <li><a>{{.Name}}</a></li>
+    </ul>
+</div>
+<div class="overflow-x-auto">
+    <div id="process-table">
+        {{template "process_table" .}}
+    </div>
+</div>
+<div class="w-9/12 m-5 collapse collapse-plus bg-base-200">
+    <input type="checkbox" />
+    <div class="collapse-title text-xl font-medium">Click to see complete innodb status result.</div>
+    <div class="collapse-content whitespace-pre-line font-mono">{{.InnoDBStatus}}</div>
+</div>
+{{end}}

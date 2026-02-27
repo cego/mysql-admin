@@ -1,0 +1,12 @@
+{{define "content"}}
+<div class="text-xl breadcrumbs">
+    <ul>
+        <li><a>Instance Selector</a></li>
+    </ul>
+</div>
+<ul>
+    {{range .Instances}}
+    <li><a href="/instance/{{.}}">{{.}}</a></li>
+    {{end}}
+</ul>
+{{end}}
