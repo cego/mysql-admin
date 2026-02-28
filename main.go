@@ -120,19 +120,19 @@ func formatNumber(num int64) string {
 // baseParams returns the persistent query-string tail (starting with &) for all
 // params that should survive sort/navigation changes: refresh, hidesleep,
 // filteruser, filterdb. Append directly to ?sort=X&dir=Y in hx-get URLs.
-func baseParams(ar, hs bool, fu, fd string) string {
+func baseParams(autoRefresh, hideSleep bool, filterUser, filterDB string) string {
 	var b strings.Builder
-	if ar {
+	if autoRefresh {
 		b.WriteString("&refresh=on")
 	}
-	if hs {
+	if hideSleep {
 		b.WriteString("&hidesleep=on")
 	}
-	if fu != "" {
-		b.WriteString("&filteruser=" + url.QueryEscape(fu))
+	if filterUser != "" {
+		b.WriteString("&filteruser=" + url.QueryEscape(filterUser))
 	}
-	if fd != "" {
-		b.WriteString("&filterdb=" + url.QueryEscape(fd))
+	if filterDB != "" {
+		b.WriteString("&filterdb=" + url.QueryEscape(filterDB))
 	}
 	return b.String()
 }
