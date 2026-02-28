@@ -11,11 +11,12 @@ import (
 
 func openDB(inst config.Instance) (*sql.DB, error) {
 	cfg := mysql.Config{
-		User:   inst.User,
-		Passwd: inst.Password,
-		Net:    "tcp",
-		Addr:   fmt.Sprintf("%s:%d", inst.Host, inst.Port),
-		DBName: inst.Database,
+		User:                 inst.User,
+		Passwd:               inst.Password,
+		Net:                  "tcp",
+		Addr:                 fmt.Sprintf("%s:%d", inst.Host, inst.Port),
+		DBName:               inst.Database,
+		AllowNativePasswords: true,
 	}
 	return sql.Open("mysql", cfg.FormatDSN())
 }
