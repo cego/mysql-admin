@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -29,7 +29,7 @@ func (c *Config) InstanceNames() []string {
 func Load() *Config {
 	dbInstances := os.Getenv("DB_INSTANCES")
 	if dbInstances == "" {
-		panic("DB_INSTANCES is required")
+		log.Fatal("DB_INSTANCES is required")
 	}
 
 	names := strings.Split(dbInstances, ",")
@@ -42,7 +42,7 @@ func Load() *Config {
 		portStr := requireEnv(upper + "_PORT")
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
-			panic(fmt.Sprintf("%s_PORT must be a number", upper))
+			log.Fatalf("%s_PORT must be a number", upper)
 		}
 		user := requireEnv(upper + "_USER")
 		password := os.Getenv(upper + "_PASSWORD")
@@ -73,7 +73,7 @@ func Load() *Config {
 func requireEnv(key string) string {
 	val := os.Getenv(key)
 	if val == "" {
-		panic(fmt.Sprintf("%s is required", key))
+		log.Fatalf("%s is required", key)
 	}
 	return val
 }
