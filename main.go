@@ -51,6 +51,7 @@ func main() {
 	tableTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/partials/process_table.html"))
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /{$}", handler.Home(cfg, homeTmpl))
 	mux.HandleFunc("GET /instance/{name}", handler.Instance(cfg, instanceTmpl, tableTmpl))
 	mux.HandleFunc("POST /instance/{name}/kill", handler.Kill(cfg, r, tableTmpl))
