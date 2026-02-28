@@ -49,6 +49,7 @@
         {{if and .Transaction (gt .Transaction.ActiveTime .Time)}}{{$t = .Transaction.ActiveTime}}{{end}}
         <tr class="transition-colors
             {{if eq .Command "Sleep"}}opacity-40 hover:bg-gray-50
+            {{else if eq .Command "Binlog Dump"}}hover:bg-gray-50
             {{else if ge $t 60}}bg-red-50 hover:bg-red-100
             {{else if ge $t 30}}bg-orange-50 hover:bg-orange-100
             {{else if ge $t 5}}bg-yellow-50 hover:bg-yellow-100
