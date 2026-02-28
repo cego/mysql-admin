@@ -59,6 +59,9 @@ func GetProcessList(inst config.Instance) ([]model.ProcessWithTransaction, strin
 		p.Info = info.String
 		processes = append(processes, p)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, "", fmt.Errorf("iterating rows: %w", err)
+	}
 
 	var typ, name, status string
 	err = db.QueryRow("SHOW ENGINE INNODB STATUS").Scan(&typ, &name, &status)
