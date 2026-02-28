@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"fmt"
 	"html/template"
@@ -15,9 +16,9 @@ import (
 
 	"github.com/cego/go-lib/v2/logger"
 	"github.com/cego/go-lib/v2/serve"
-	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/cego/mysql-admin/internal/config"
+	"github.com/cego/mysql-admin/internal/db"
 	"github.com/cego/mysql-admin/internal/handler"
 )
 
@@ -53,6 +54,17 @@ func main() {
 	l := logger.New()
 	slog.SetDefault(l)
 
+	// Open one connection pool per instance at startup and reuse across requests.
+	dbs := make(map[string]*sql.DB, len(cfg.Instances))
+	for name, inst := range cfg.Instances {
+		d, err := db.OpenDB(inst)
+		if err != nil {
+			slog.Error("failed to open database", "instance", name, "error", err)
+			os.Exit(1)
+		}
+		dbs[name] = d
+	}
+
 	homeTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/layout.html", "templates/home.html"))
 	instanceTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/layout.html", "templates/instance.html", "templates/partials/process_table.html"))
 	tableTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/partials/process_table.html"))
@@ -60,8 +72,8 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /{$}", handler.Home(cfg, homeTmpl))
-	mux.HandleFunc("GET /instance/{name}", handler.Instance(cfg, instanceTmpl, tableTmpl))
-	mux.HandleFunc("POST /instance/{name}/kill", handler.Kill(cfg, tableTmpl))
+	mux.HandleFunc("GET /instance/{name}", handler.Instance(cfg, dbs, instanceTmpl, tableTmpl))
+	mux.HandleFunc("POST /instance/{name}/kill", handler.Kill(cfg, dbs, tableTmpl))
 
 	staticSub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(staticSub)))

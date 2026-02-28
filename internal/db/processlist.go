@@ -10,7 +10,10 @@ import (
 	"github.com/cego/mysql-admin/internal/model"
 )
 
-func openDB(inst config.Instance) (*sql.DB, error) {
+// OpenDB creates a connection pool for the given instance. The pool is meant to
+// be long-lived; callers should create one pool per instance at startup and
+// reuse it across requests.
+func OpenDB(inst config.Instance) (*sql.DB, error) {
 	cfg := mysql.Config{
 		User:                 inst.User,
 		Passwd:               inst.Password,
@@ -22,13 +25,7 @@ func openDB(inst config.Instance) (*sql.DB, error) {
 	return sql.Open("mysql", cfg.FormatDSN())
 }
 
-func GetProcessList(inst config.Instance) ([]model.ProcessWithTransaction, string, error) {
-	db, err := openDB(inst)
-	if err != nil {
-		return nil, "", fmt.Errorf("opening database: %w", err)
-	}
-	defer db.Close()
-
+func GetProcessList(db *sql.DB) ([]model.ProcessWithTransaction, string, error) {
 	rows, err := db.Query("SHOW PROCESSLIST")
 	if err != nil {
 		return nil, "", fmt.Errorf("show processlist: %w", err)
@@ -79,17 +76,11 @@ func GetProcessList(inst config.Instance) ([]model.ProcessWithTransaction, strin
 	return processes, status, nil
 }
 
-func KillProcess(inst config.Instance, id int64) error {
-	db, err := openDB(inst)
-	if err != nil {
-		return fmt.Errorf("opening database: %w", err)
-	}
-	defer db.Close()
-
+func KillProcess(db *sql.DB, id int64) error {
 	// Use fmt.Sprintf rather than a placeholder because MariaDB/MySQL may not
 	// support parameter binding for KILL statements across all versions.
 	// id is validated as int64 by the caller so there is no injection risk.
-	_, err = db.Exec(fmt.Sprintf("KILL %d", id))
+	_, err := db.Exec(fmt.Sprintf("KILL %d", id))
 	if err != nil {
 		return fmt.Errorf("killing process %d: %w", id, err)
 	}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -39,16 +40,15 @@ func applyFilters(processes []model.ProcessWithTransaction, hideSleep bool, filt
 	return out
 }
 
-func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.HandlerFunc {
+func Instance(cfg *config.Config, dbs map[string]*sql.DB, fullTmpl, tableTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
-		inst, ok := cfg.Instances[name]
-		if !ok {
+		if _, ok := cfg.Instances[name]; !ok {
 			http.NotFound(w, r)
 			return
 		}
 
-		processes, innoDBStatus, err := db.GetProcessList(inst)
+		processes, innoDBStatus, err := db.GetProcessList(dbs[name])
 		if err != nil {
 			slog.Error("failed to get process list", "instance", name, "error", err)
 			http.Error(w, "Failed to connect to database", http.StatusInternalServerError)
@@ -66,8 +66,8 @@ func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.H
 		processes = applyFilters(processes, hideSleep, filterUser, filterDB)
 
 		data := instanceData{
-			Name:      name,
-			Processes: processes,
+			Name:         name,
+			Processes:    processes,
 			InnoDBStatus: innoDBStatus,
 			SortColumn:   sortCol,
 			SortDir:      sortDir,

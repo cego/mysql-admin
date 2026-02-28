@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"fmt"
 	"html"
 	"html/template"
@@ -21,7 +22,7 @@ func htmlError(w http.ResponseWriter, code int, msg string) {
 	fmt.Fprintf(w, `<div class="px-4 py-10 text-center text-sm text-red-500">%s</div>`, html.EscapeString(msg))
 }
 
-func Kill(cfg *config.Config, tableTmpl *template.Template) http.HandlerFunc {
+func Kill(cfg *config.Config, dbs map[string]*sql.DB, tableTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Reject requests that did not originate from HTMX. Browsers will not send
 		// custom headers (HX-Request) on cross-origin form submissions, so this is
@@ -32,8 +33,7 @@ func Kill(cfg *config.Config, tableTmpl *template.Template) http.HandlerFunc {
 		}
 
 		name := r.PathValue("name")
-		inst, ok := cfg.Instances[name]
-		if !ok {
+		if _, ok := cfg.Instances[name]; !ok {
 			htmlError(w, http.StatusNotFound, "instance not found")
 			return
 		}
@@ -45,7 +45,7 @@ func Kill(cfg *config.Config, tableTmpl *template.Template) http.HandlerFunc {
 			return
 		}
 
-		if err := db.KillProcess(inst, id); err != nil {
+		if err := db.KillProcess(dbs[name], id); err != nil {
 			slog.Error("failed to kill process", "instance", name, "id", id, "error", err)
 			htmlError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -56,7 +56,7 @@ func Kill(cfg *config.Config, tableTmpl *template.Template) http.HandlerFunc {
 			slog.Info("killed process", "user", user, "process_id", id, "instance", name)
 		}
 
-		processes, _, err := db.GetProcessList(inst)
+		processes, _, err := db.GetProcessList(dbs[name])
 		if err != nil {
 			slog.Error("failed to refresh process list", "instance", name, "error", err)
 			htmlError(w, http.StatusInternalServerError, err.Error())
