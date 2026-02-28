@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  enable:
+    - errcheck       # unchecked errors
+    - govet          # go vet checks
+    - ineffassign    # unused assignments
+    - staticcheck    # comprehensive static analysis (includes gosimple)
+    - unused         # unused code
+    - misspell       # spelling mistakes in comments/strings
+    - unconvert      # unnecessary type conversions
+  exclusions:
+    rules:
+      # Errcheck is noisy for deferred Close/Flush calls
+      - linters: [errcheck]
+        text: "Error return value of .*(Close|Flush)"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/cego/mysql-admin

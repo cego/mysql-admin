@@ -1,0 +1,77 @@
+services:
+  db:
+    image: mariadb:11.7
+    environment:
+      MARIADB_ROOT_PASSWORD: Secret1234
+      MARIADB_DATABASE: testdb
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mysql-admin:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      DB_INSTANCES: mydb
+      MYDB_HOST: db
+      MYDB_PORT: "3306"
+      MYDB_USER: root
+      MYDB_PASSWORD: Secret1234
+    develop:
+      watch:
+        - action: rebuild
+          path: ..
+          ignore:
+            - dev-setup/
+            - .git/
+
+  worker1:
+    image: mariadb:11.7
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./worker.sh:/worker.sh
+    entrypoint: ["bash", "/worker.sh"]
+    environment:
+      WORKER_ID: "1"
+      DB_HOST: db
+
+  worker2:
+    image: mariadb:11.7
+    deploy:
+      mode: replicated
+      replicas: 10
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./worker.sh:/worker.sh
+    entrypoint: ["bash", "/worker.sh"]
+    environment:
+      WORKER_ID: "2"
+      DB_HOST: db
+
+  worker3:
+    image: mariadb:11.7
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./worker.sh:/worker.sh
+    entrypoint: ["bash", "/worker.sh"]
+    environment:
+      WORKER_ID: "3"
+      DB_HOST: db
