@@ -55,6 +55,7 @@ func main() {
 	slog.SetDefault(l)
 
 	// Open one connection pool per instance at startup and reuse across requests.
+	// sql.Open only validates the DSN; Ping verifies the connection is reachable.
 	dbs := make(map[string]*sql.DB, len(cfg.Instances))
 	for name, inst := range cfg.Instances {
 		d, err := db.OpenDB(inst)
@@ -62,6 +63,11 @@ func main() {
 			slog.Error("failed to open database", "instance", name, "error", err)
 			os.Exit(1)
 		}
+		if err := d.Ping(); err != nil {
+			slog.Error("database unreachable at startup", "instance", name, "error", err)
+			os.Exit(1)
+		}
+		defer d.Close()
 		dbs[name] = d
 	}
 
