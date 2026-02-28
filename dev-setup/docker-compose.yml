@@ -1,6 +1,6 @@
 services:
   db:
-    image: mariadb:latest
+    image: mariadb:11.7
     environment:
       MARIADB_ROOT_PASSWORD: Secret1234
       MARIADB_DATABASE: testdb
@@ -38,7 +38,7 @@ services:
             - .git/
 
   worker1:
-    image: mariadb:latest
+    image: mariadb:11.7
     depends_on:
       db:
         condition: service_healthy
@@ -50,7 +50,7 @@ services:
       DB_HOST: db
 
   worker2:
-    image: mariadb:latest
+    image: mariadb:11.7
     deploy:
       mode: replicated
       replicas: 100
@@ -65,7 +65,7 @@ services:
       DB_HOST: db
 
   worker3:
-    image: mariadb:latest
+    image: mariadb:11.7
     depends_on:
       db:
         condition: service_healthy
