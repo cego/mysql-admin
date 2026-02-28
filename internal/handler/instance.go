@@ -12,7 +12,6 @@ import (
 
 type instanceData struct {
 	Name         string
-	Instances    []string
 	Processes    []model.ProcessWithTransaction
 	InnoDBStatus string
 	SortColumn   string
@@ -67,9 +66,8 @@ func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.H
 		processes = applyFilters(processes, hideSleep, filterUser, filterDB)
 
 		data := instanceData{
-			Name:         name,
-			Instances:    cfg.InstanceNames(),
-			Processes:    processes,
+			Name:      name,
+			Processes: processes,
 			InnoDBStatus: innoDBStatus,
 			SortColumn:   sortCol,
 			SortDir:      sortDir,
