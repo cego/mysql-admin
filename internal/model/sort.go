@@ -14,7 +14,13 @@ func SortProcesses(processes []ProcessWithTransaction, col, dir string) {
 	desc := dir == "desc"
 
 	sort.SliceStable(processes, func(i, j int) bool {
+		// Swap a and b for descending rather than negating the result.
+		// Negating (!less) would make both less(i,j) and less(j,i) true for
+		// equal elements, violating sort.SliceStable's strict weak ordering.
 		a, b := processes[i], processes[j]
+		if desc {
+			a, b = b, a
+		}
 		var less bool
 
 		switch col {
@@ -60,9 +66,6 @@ func SortProcesses(processes []ProcessWithTransaction, col, dir string) {
 			less = a.ID < b.ID
 		}
 
-		if desc {
-			return !less
-		}
 		return less
 	})
 }
