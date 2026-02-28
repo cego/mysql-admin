@@ -153,8 +153,8 @@ func baseParams(autoRefresh, hideSleep bool, filterUser, filterDB string) templa
 	if autoRefresh {
 		b.WriteString("&refresh=on")
 	}
-	if hideSleep {
-		b.WriteString("&hidesleep=on")
+	if !hideSleep {
+		b.WriteString("&hidesleep=off")
 	}
 	if filterUser != "" {
 		b.WriteString("&filteruser=" + url.QueryEscape(filterUser))
