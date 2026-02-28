@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-sql-driver/mysql"
+
 	"github.com/cego/mysql-admin/internal/config"
 	"github.com/cego/mysql-admin/internal/model"
-	"github.com/go-sql-driver/mysql"
 )
 
 func openDB(inst config.Instance) (*sql.DB, error) {

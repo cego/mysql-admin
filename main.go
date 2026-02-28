@@ -16,9 +16,10 @@ import (
 	"github.com/cego/go-lib/v2/logger"
 	"github.com/cego/go-lib/v2/renderer"
 	"github.com/cego/go-lib/v2/serve"
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/cego/mysql-admin/internal/config"
 	"github.com/cego/mysql-admin/internal/handler"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 //go:embed templates
@@ -76,7 +77,7 @@ func stringToColor(str string) string {
 	}
 	var hash int32
 	for _, c := range str {
-		hash = int32(c) + ((hash << 5) - hash)
+		hash = c + ((hash << 5) - hash)
 	}
 	colour := "#"
 	for i := 0; i < 3; i++ {
