@@ -17,6 +17,27 @@ type instanceData struct {
 	InnoDBStatus string
 	SortColumn   string
 	SortDir      string
+	AutoRefresh  bool
+	HideSleep    bool
+	FilterUser   string
+	FilterDB     string
+}
+
+func applyFilters(processes []model.ProcessWithTransaction, hideSleep bool, filterUser, filterDB string) []model.ProcessWithTransaction {
+	out := make([]model.ProcessWithTransaction, 0, len(processes))
+	for _, p := range processes {
+		if hideSleep && p.Command == "Sleep" {
+			continue
+		}
+		if filterUser != "" && p.User != filterUser {
+			continue
+		}
+		if filterDB != "" && p.DB != filterDB {
+			continue
+		}
+		out = append(out, p)
+	}
+	return out
 }
 
 func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.HandlerFunc {
@@ -37,7 +58,13 @@ func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.H
 
 		sortCol := r.URL.Query().Get("sort")
 		sortDir := r.URL.Query().Get("dir")
+		autoRefresh := r.URL.Query().Get("refresh") == "on"
+		hideSleep := r.URL.Query().Get("hidesleep") == "on"
+		filterUser := r.URL.Query().Get("filteruser")
+		filterDB := r.URL.Query().Get("filterdb")
+
 		model.SortProcesses(processes, sortCol, sortDir)
+		processes = applyFilters(processes, hideSleep, filterUser, filterDB)
 
 		data := instanceData{
 			Name:         name,
@@ -46,6 +73,10 @@ func Instance(cfg *config.Config, fullTmpl, tableTmpl *template.Template) http.H
 			InnoDBStatus: innoDBStatus,
 			SortColumn:   sortCol,
 			SortDir:      sortDir,
+			AutoRefresh:  autoRefresh,
+			HideSleep:    hideSleep,
+			FilterUser:   filterUser,
+			FilterDB:     filterDB,
 		}
 
 		if r.Header.Get("HX-Request") == "true" {

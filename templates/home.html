@@ -1,12 +1,18 @@
 {{define "content"}}
-<div class="text-xl breadcrumbs">
-    <ul>
-        <li><a>Instance Selector</a></li>
-    </ul>
+<div class="max-w-2xl">
+    <h1 class="text-xl font-semibold text-gray-900 mb-4">Instances</h1>
+    <div class="grid gap-3">
+        {{range .Instances}}
+        <a href="/instance/{{.}}" class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow hover:border-blue-300 transition-all group">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-gray-300 group-hover:bg-green-400 transition-colors"></div>
+                <span class="font-medium text-gray-900">{{.}}</span>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </a>
+        {{end}}
+    </div>
 </div>
-<ul>
-    {{range .Instances}}
-    <li><a href="/instance/{{.}}">{{.}}</a></li>
-    {{end}}
-</ul>
 {{end}}

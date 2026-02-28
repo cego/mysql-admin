@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ var funcMap = template.FuncMap{
 	"join":          strings.Join,
 	"nextDir":       nextDir,
 	"sortIndicator": sortIndicator,
+	"baseParams":    baseParams,
 }
 
 func main() {
@@ -111,6 +113,26 @@ func formatNumber(num int64) string {
 		result = append(result, byte(c))
 	}
 	return string(result)
+}
+
+// baseParams returns the persistent query-string tail (starting with &) for all
+// params that should survive sort/navigation changes: refresh, hidesleep,
+// filteruser, filterdb. Append directly to ?sort=X&dir=Y in hx-get URLs.
+func baseParams(ar, hs bool, fu, fd string) string {
+	var b strings.Builder
+	if ar {
+		b.WriteString("&refresh=on")
+	}
+	if hs {
+		b.WriteString("&hidesleep=on")
+	}
+	if fu != "" {
+		b.WriteString("&filteruser=" + url.QueryEscape(fu))
+	}
+	if fd != "" {
+		b.WriteString("&filterdb=" + url.QueryEscape(fd))
+	}
+	return b.String()
 }
 
 func nextDir(currentCol, currentDir, col string) string {

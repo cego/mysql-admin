@@ -48,13 +48,23 @@ func Kill(cfg *config.Config, rend *renderer.Renderer, tableTmpl *template.Templ
 
 		sortCol := r.URL.Query().Get("sort")
 		sortDir := r.URL.Query().Get("dir")
+		autoRefresh := r.URL.Query().Get("refresh") == "on"
+		hideSleep := r.URL.Query().Get("hidesleep") == "on"
+		filterUser := r.URL.Query().Get("filteruser")
+		filterDB := r.URL.Query().Get("filterdb")
+
 		model.SortProcesses(processes, sortCol, sortDir)
+		processes = applyFilters(processes, hideSleep, filterUser, filterDB)
 
 		data := instanceData{
-			Name:       name,
-			Processes:  processes,
-			SortColumn: sortCol,
-			SortDir:    sortDir,
+			Name:        name,
+			Processes:   processes,
+			SortColumn:  sortCol,
+			SortDir:     sortDir,
+			AutoRefresh: autoRefresh,
+			HideSleep:   hideSleep,
+			FilterUser:  filterUser,
+			FilterDB:    filterDB,
 		}
 
 		if err := tableTmpl.ExecuteTemplate(w, "process_table", data); err != nil {

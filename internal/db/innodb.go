@@ -54,7 +54,7 @@ func parseInnoDBStatus(status string) map[int64]*model.TransactionInfo {
 		if strings.HasPrefix(line, "MariaDB thread id") || strings.HasPrefix(line, "MySQL thread id") {
 			parts := strings.Fields(line)
 			if len(parts) >= 4 && current != nil {
-				threadID, err := strconv.ParseInt(parts[3], 10, 64)
+				threadID, err := strconv.ParseInt(strings.TrimRight(parts[3], ","), 10, 64)
 				if err == nil {
 					transactions[threadID] = current
 				}
