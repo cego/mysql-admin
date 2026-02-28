@@ -145,13 +145,16 @@ func formatNumber(num int64) string {
 // baseParams returns the persistent query-string tail (starting with &) for all
 // params that should survive sort/navigation changes: refresh, hidesleep,
 // filteruser, filterdb. Append directly to ?sort=X&dir=Y in hx-get URLs.
-func baseParams(autoRefresh, hideSleep bool, filterUser, filterDB string) string {
+//
+// Returns template.URL so Go's html/template does not re-encode the & separators
+// when the value is interpolated inside an href attribute.
+func baseParams(autoRefresh, hideSleep bool, filterUser, filterDB string) template.URL {
 	var b strings.Builder
 	if autoRefresh {
 		b.WriteString("&refresh=on")
 	}
-	if hideSleep {
-		b.WriteString("&hidesleep=on")
+	if !hideSleep {
+		b.WriteString("&hidesleep=off")
 	}
 	if filterUser != "" {
 		b.WriteString("&filteruser=" + url.QueryEscape(filterUser))
@@ -159,7 +162,7 @@ func baseParams(autoRefresh, hideSleep bool, filterUser, filterDB string) string
 	if filterDB != "" {
 		b.WriteString("&filterdb=" + url.QueryEscape(filterDB))
 	}
-	return b.String()
+	return template.URL(b.String())
 }
 
 func nextDir(currentCol, currentDir, col string) string {

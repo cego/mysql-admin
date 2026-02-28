@@ -49,12 +49,14 @@
         {{if and .Transaction (gt .Transaction.ActiveTime .Time)}}{{$t = .Transaction.ActiveTime}}{{end}}
         <tr class="transition-colors
             {{if eq .Command "Sleep"}}opacity-40 hover:bg-gray-50
+            {{else if eq .Command "Binlog Dump"}}hover:bg-gray-50
             {{else if ge $t 60}}bg-red-50 hover:bg-red-100
             {{else if ge $t 30}}bg-orange-50 hover:bg-orange-100
             {{else if ge $t 5}}bg-yellow-50 hover:bg-yellow-100
             {{else}}hover:bg-gray-50{{end}}">
 
             <td class="px-3 py-2 align-top whitespace-nowrap">
+                {{if ne .Command "Binlog Dump"}}
                 <button
                     class="px-2 py-1 text-xs font-medium text-red-700 border border-red-200 rounded hover:bg-red-50 transition-colors"
                     hx-post="/instance/{{$name}}/kill?sort={{$sc}}&amp;dir={{$sd}}{{baseParams $ar $hs $fu $fd}}"
@@ -63,6 +65,7 @@
                     hx-target="#process-table"
                     hx-swap="innerHTML"
                 >Kill</button>
+                {{end}}
             </td>
 
             <td class="px-3 py-2 align-top whitespace-nowrap text-gray-700 tabular-nums">{{.ID}}</td>

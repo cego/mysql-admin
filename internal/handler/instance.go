@@ -46,7 +46,7 @@ func buildInstanceData(name string, processes []model.ProcessWithTransaction, r 
 	sortCol := r.URL.Query().Get("sort")
 	sortDir := r.URL.Query().Get("dir")
 	autoRefresh := r.URL.Query().Get("refresh") == "on"
-	hideSleep := r.URL.Query().Get("hidesleep") == "on"
+	hideSleep := r.URL.Query().Get("hidesleep") != "off"
 	filterUser := r.URL.Query().Get("filteruser")
 	filterDB := r.URL.Query().Get("filterdb")
 
