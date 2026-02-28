@@ -24,7 +24,7 @@ func SortProcesses(processes []ProcessWithTransaction, col, dir string) {
 			less = strings.ToLower(a.User) < strings.ToLower(b.User)
 		case "Host":
 			less = strings.ToLower(a.Host) < strings.ToLower(b.Host)
-		case "db":
+		case "db": // lowercase to match MySQL's SHOW PROCESSLIST column name exactly
 			less = strings.ToLower(a.DB) < strings.ToLower(b.DB)
 		case "Command":
 			less = strings.ToLower(a.Command) < strings.ToLower(b.Command)
