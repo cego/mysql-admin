@@ -53,7 +53,7 @@ services:
     image: mariadb:11.7
     deploy:
       mode: replicated
-      replicas: 100
+      replicas: 10
     depends_on:
       db:
         condition: service_healthy
