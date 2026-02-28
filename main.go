@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/cego/go-lib/v2/logger"
-	"github.com/cego/go-lib/v2/renderer"
 	"github.com/cego/go-lib/v2/serve"
 	_ "github.com/go-sql-driver/mysql"
 
@@ -44,8 +43,6 @@ func main() {
 	l := logger.New()
 	slog.SetDefault(l)
 
-	r := renderer.New(l)
-
 	homeTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/layout.html", "templates/home.html"))
 	instanceTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/layout.html", "templates/instance.html", "templates/partials/process_table.html"))
 	tableTmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/partials/process_table.html"))
@@ -54,7 +51,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /{$}", handler.Home(cfg, homeTmpl))
 	mux.HandleFunc("GET /instance/{name}", handler.Instance(cfg, instanceTmpl, tableTmpl))
-	mux.HandleFunc("POST /instance/{name}/kill", handler.Kill(cfg, r, tableTmpl))
+	mux.HandleFunc("POST /instance/{name}/kill", handler.Kill(cfg, tableTmpl))
 
 	staticSub, _ := fs.Sub(staticFS, "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(staticSub)))
