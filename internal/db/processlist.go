@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 
 	"github.com/go-sql-driver/mysql"
 
@@ -63,6 +64,7 @@ func GetProcessList(db *sql.DB) ([]model.ProcessWithTransaction, string, error) 
 	var typ, name, status string
 	err = db.QueryRow("SHOW ENGINE INNODB STATUS").Scan(&typ, &name, &status)
 	if err != nil {
+		slog.Warn("failed to get innodb status, transaction data will be unavailable", "error", err)
 		status = ""
 	}
 
