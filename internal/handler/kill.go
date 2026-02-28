@@ -23,6 +23,14 @@ func htmlError(w http.ResponseWriter, code int, msg string) {
 
 func Kill(cfg *config.Config, tableTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Reject requests that did not originate from HTMX. Browsers will not send
+		// custom headers (HX-Request) on cross-origin form submissions, so this is
+		// a lightweight CSRF mitigation that costs nothing for legitimate clients.
+		if r.Header.Get("HX-Request") != "true" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+
 		name := r.PathValue("name")
 		inst, ok := cfg.Instances[name]
 		if !ok {
