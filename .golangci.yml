@@ -11,9 +11,9 @@ linters:
     - unconvert      # unnecessary type conversions
   exclusions:
     rules:
-      # Errcheck is noisy for deferred Close calls
+      # Errcheck is noisy for deferred Close/Flush calls
       - linters: [errcheck]
-        text: "Error return value of .*(Close|Write|Flush)"
+        text: "Error return value of .*(Close|Flush)"
 
 formatters:
   enable:
