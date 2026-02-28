@@ -1,3 +1,19 @@
+{{define "sortHeader"}}
+{{- $col := index . "col" -}}
+{{- $label := index . "label" -}}
+{{- $name := index . "name" -}}
+{{- $sc := index . "sc" -}}
+{{- $sd := index . "sd" -}}
+{{- $ar := index . "ar" -}}
+{{- $hs := index . "hs" -}}
+{{- $fu := index . "fu" -}}
+{{- $fd := index . "fd" -}}
+<th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
+    hx-get="/instance/{{$name}}?sort={{$col}}&amp;dir={{nextDir $sc $sd $col}}{{baseParams $ar $hs $fu $fd}}"
+    hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
+    {{$label}}{{sortIndicator $sc $sd $col}}</th>
+{{- end}}
+
 {{define "process_table"}}
 {{$name := .Name}}
 {{$sc   := .SortColumn}}
@@ -14,46 +30,16 @@
     <thead>
         <tr class="border-b-2 border-gray-200 bg-gray-50 text-left">
             <th class="px-3 py-2 w-14"></th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Id&amp;dir={{nextDir $sc $sd "Id"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Id{{sortIndicator $sc $sd "Id"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=User&amp;dir={{nextDir $sc $sd "User"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                User{{sortIndicator $sc $sd "User"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=db&amp;dir={{nextDir $sc $sd "db"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                DB{{sortIndicator $sc $sd "db"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Command&amp;dir={{nextDir $sc $sd "Command"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Command{{sortIndicator $sc $sd "Command"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Time&amp;dir={{nextDir $sc $sd "Time"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Time{{sortIndicator $sc $sd "Time"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=State&amp;dir={{nextDir $sc $sd "State"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                State{{sortIndicator $sc $sd "State"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=TransactionTime&amp;dir={{nextDir $sc $sd "TransactionTime"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Transaction{{sortIndicator $sc $sd "TransactionTime"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Info&amp;dir={{nextDir $sc $sd "Info"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Info{{sortIndicator $sc $sd "Info"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Progress&amp;dir={{nextDir $sc $sd "Progress"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Progress{{sortIndicator $sc $sd "Progress"}}</th>
-            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100 transition-colors whitespace-nowrap"
-                hx-get="/instance/{{$name}}?sort=Host&amp;dir={{nextDir $sc $sd "Host"}}{{baseParams $ar $hs $fu $fd}}"
-                hx-target="#process-table" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#refresh-indicator">
-                Host{{sortIndicator $sc $sd "Host"}}</th>
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Id" "label" "Id")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "User" "label" "User")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "db" "label" "DB")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Command" "label" "Command")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Time" "label" "Time")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "State" "label" "State")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "TransactionTime" "label" "Transaction")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Info" "label" "Info")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Progress" "label" "Progress")}}
+            {{template "sortHeader" (dict "name" $name "sc" $sc "sd" $sd "ar" $ar "hs" $hs "fu" $fu "fd" $fd "col" "Host" "label" "Host")}}
         </tr>
     </thead>
     <tbody class="divide-y divide-gray-100">

@@ -35,6 +35,16 @@ var funcMap = template.FuncMap{
 	"nextDir":       nextDir,
 	"sortIndicator": sortIndicator,
 	"baseParams":    baseParams,
+	"dict":          dict,
+}
+
+// dict creates a map from alternating key/value pairs, for use in template calls.
+func dict(pairs ...any) map[string]any {
+	m := make(map[string]any, len(pairs)/2)
+	for i := 0; i+1 < len(pairs); i += 2 {
+		m[pairs[i].(string)] = pairs[i+1]
+	}
+	return m
 }
 
 func main() {
