@@ -29,6 +29,13 @@ services:
       MYDB_PORT: "3306"
       MYDB_USER: root
       MYDB_PASSWORD: Secret1234
+    develop:
+      watch:
+        - action: rebuild
+          path: ..
+          ignore:
+            - dev-setup/
+            - .git/
 
   worker1:
     image: mariadb:latest
@@ -44,6 +51,9 @@ services:
 
   worker2:
     image: mariadb:latest
+    deploy:
+      mode: replicated
+      replicas: 100
     depends_on:
       db:
         condition: service_healthy
