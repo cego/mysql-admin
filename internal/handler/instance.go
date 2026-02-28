@@ -40,6 +40,31 @@ func applyFilters(processes []model.ProcessWithTransaction, hideSleep bool, filt
 	return out
 }
 
+// buildInstanceData parses the common sort/filter query params from r, applies
+// them to processes, and returns a populated instanceData ready for rendering.
+func buildInstanceData(name string, processes []model.ProcessWithTransaction, r *http.Request) instanceData {
+	sortCol := r.URL.Query().Get("sort")
+	sortDir := r.URL.Query().Get("dir")
+	autoRefresh := r.URL.Query().Get("refresh") == "on"
+	hideSleep := r.URL.Query().Get("hidesleep") == "on"
+	filterUser := r.URL.Query().Get("filteruser")
+	filterDB := r.URL.Query().Get("filterdb")
+
+	model.SortProcesses(processes, sortCol, sortDir)
+	processes = applyFilters(processes, hideSleep, filterUser, filterDB)
+
+	return instanceData{
+		Name:        name,
+		Processes:   processes,
+		SortColumn:  sortCol,
+		SortDir:     sortDir,
+		AutoRefresh: autoRefresh,
+		HideSleep:   hideSleep,
+		FilterUser:  filterUser,
+		FilterDB:    filterDB,
+	}
+}
+
 func Instance(cfg *config.Config, dbs map[string]*sql.DB, fullTmpl, tableTmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
@@ -55,27 +80,8 @@ func Instance(cfg *config.Config, dbs map[string]*sql.DB, fullTmpl, tableTmpl *t
 			return
 		}
 
-		sortCol := r.URL.Query().Get("sort")
-		sortDir := r.URL.Query().Get("dir")
-		autoRefresh := r.URL.Query().Get("refresh") == "on"
-		hideSleep := r.URL.Query().Get("hidesleep") == "on"
-		filterUser := r.URL.Query().Get("filteruser")
-		filterDB := r.URL.Query().Get("filterdb")
-
-		model.SortProcesses(processes, sortCol, sortDir)
-		processes = applyFilters(processes, hideSleep, filterUser, filterDB)
-
-		data := instanceData{
-			Name:         name,
-			Processes:    processes,
-			InnoDBStatus: innoDBStatus,
-			SortColumn:   sortCol,
-			SortDir:      sortDir,
-			AutoRefresh:  autoRefresh,
-			HideSleep:    hideSleep,
-			FilterUser:   filterUser,
-			FilterDB:     filterDB,
-		}
+		data := buildInstanceData(name, processes, r)
+		data.InnoDBStatus = innoDBStatus
 
 		if r.Header.Get("HX-Request") == "true" {
 			if err := tableTmpl.ExecuteTemplate(w, "process_table", data); err != nil {
