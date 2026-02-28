@@ -86,7 +86,10 @@ func KillProcess(inst config.Instance, id int64) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("KILL ?", id)
+	// Use fmt.Sprintf rather than a placeholder because MariaDB/MySQL may not
+	// support parameter binding for KILL statements across all versions.
+	// id is validated as int64 by the caller so there is no injection risk.
+	_, err = db.Exec(fmt.Sprintf("KILL %d", id))
 	if err != nil {
 		return fmt.Errorf("killing process %d: %w", id, err)
 	}
