@@ -18,7 +18,7 @@ import (
 func htmlError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(code)
-	_, _ = fmt.Fprintf(w, `<div class="px-4 py-10 text-center text-sm text-red-500">%s</div>`, html.EscapeString(msg))
+	_, _ = fmt.Fprintf(w, `<div class="px-4 py-10 text-center text-sm text-red-500 dark:text-red-400">%s</div>`, html.EscapeString(msg))
 }
 
 func Kill(cfg *config.Config, dbs map[string]*sql.DB, tableTmpl *template.Template) http.HandlerFunc {
