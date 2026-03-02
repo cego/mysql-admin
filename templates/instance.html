@@ -9,13 +9,13 @@
 
 <div class="flex items-center justify-between mb-3">
     <nav class="flex items-center gap-2 text-sm">
-        <a href="/" class="text-gray-500 hover:text-gray-700 transition-colors">Instances</a>
-        <span class="text-gray-300">/</span>
-        <span class="font-medium text-gray-900">{{$name}}</span>
+        <a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">Instances</a>
+        <span class="text-gray-300 dark:text-gray-600">/</span>
+        <span class="font-medium text-gray-900 dark:text-gray-100">{{$name}}</span>
     </nav>
 
     <div class="flex items-center gap-2">
-        <span id="refresh-indicator" class="htmx-indicator items-center gap-1.5 text-xs text-gray-400 mr-1">
+        <span id="refresh-indicator" class="htmx-indicator items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mr-1">
             <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -25,15 +25,15 @@
 
         <a href="/instance/{{$name}}?sort={{$sc}}&dir={{$sd}}{{baseParams $ar (not $hs) $fu $fd}}"
            class="px-3 py-1.5 text-xs font-medium border rounded transition-colors
-                  {{if $hs}}bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100
-                  {{else}}bg-white text-gray-600 border-gray-200 hover:bg-gray-50{{end}}">
+                  {{if $hs}}bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900
+                  {{else}}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700{{end}}">
             {{if $hs}}Show Idle{{else}}Hide Idle{{end}}
         </a>
 
         <a href="/instance/{{$name}}?sort={{$sc}}&dir={{$sd}}{{baseParams (not $ar) $hs $fu $fd}}"
            class="px-3 py-1.5 text-xs font-medium border rounded transition-colors
-                  {{if $ar}}bg-green-50 text-green-700 border-green-200 hover:bg-green-100
-                  {{else}}bg-white text-gray-600 border-gray-200 hover:bg-gray-50{{end}}">
+                  {{if $ar}}bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900
+                  {{else}}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700{{end}}">
             {{if $ar}}⏸ Pause{{else}}▶ Auto Refresh{{end}}
         </a>
     </div>
@@ -42,23 +42,23 @@
 {{/* Active filter tags */}}
 {{if or $fu $fd}}
 <div class="flex items-center gap-2 mb-3">
-    <span class="text-xs text-gray-500">Filtered by:</span>
+    <span class="text-xs text-gray-500 dark:text-gray-400">Filtered by:</span>
     {{if $fu}}
     <a href="/instance/{{$name}}?sort={{$sc}}&dir={{$sd}}{{baseParams $ar $hs "" $fd}}"
-       class="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-violet-100 text-violet-800 rounded-full hover:bg-violet-200 transition-colors">
+       class="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200 rounded-full hover:bg-violet-200 dark:hover:bg-violet-800 transition-colors">
         User: {{$fu}} <span class="font-bold">×</span>
     </a>
     {{end}}
     {{if $fd}}
     <a href="/instance/{{$name}}?sort={{$sc}}&dir={{$sd}}{{baseParams $ar $hs $fu ""}}"
-       class="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-teal-100 text-teal-800 rounded-full hover:bg-teal-200 transition-colors">
+       class="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 rounded-full hover:bg-teal-200 dark:hover:bg-teal-800 transition-colors">
         DB: {{$fd}} <span class="font-bold">×</span>
     </a>
     {{end}}
 </div>
 {{end}}
 
-<div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+<div class="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
     <div id="process-table"
          {{if $ar}}
          hx-get="/instance/{{$name}}?sort={{$sc}}&dir={{$sd}}{{baseParams true $hs $fu $fd}}"
@@ -80,10 +80,10 @@
 </script>
 {{end}}
 
-<details class="mt-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-    <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg select-none">
+<details class="mt-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+    <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg select-none">
         InnoDB Status
     </summary>
-    <pre class="px-4 py-3 text-xs font-mono text-gray-600 whitespace-pre overflow-x-auto border-t border-gray-200">{{.InnoDBStatus}}</pre>
+    <pre class="px-4 py-3 text-xs font-mono text-gray-600 dark:text-gray-400 whitespace-pre overflow-x-auto border-t border-gray-200 dark:border-gray-700">{{.InnoDBStatus}}</pre>
 </details>
 {{end}}
